@@ -13,24 +13,22 @@ enemy = pygame.image.load("textures/enemy.png")
 
 # Functions
 def boundsCheck(positionX, positionY, offsetX, offsetY, width, height, screen):
-    positionXY = (positionX, positionY)
     if 0 > positionX + offsetX:
-        positionXY = (0 - offsetX, positionY)
+        positionX = 0 - offsetX
     elif screen.get_width() < positionX + offsetX + width:
-        positionXY = (screen.get_width() - width - offsetX, positionY)
-    elif 0 > positionY + offsetY:
-        positionXY = (positionX, 0 - offsetY)
+        positionX = screen.get_width() - width - offsetX
+    if 0 > positionY + offsetY:
+        positionY = 0 - offsetY
     elif screen.get_height() < positionY + offsetY + height:
-        positionXY = (positionX, screen.get_height() - offsetY- height)
+        positionY = screen.get_height() - offsetY- height
+    positionXY = (positionX, positionY)
     return positionXY
 
 def boxcollisionCheck(x1,y1,offsetx1,offsety1,width1,height1,x2,y2,offsetx2,offsety2,width2,height2):
     noCollision = True
     if (x2 + offsetx2 > x1 + offsetx1 + width1) or (x2 + offsetx2 + width2 < x1 + offsetx1):
-        print("x")
         noCollision = False
     if (y2 + offsety2 + height2 < y1 + offsety1) or (y2 + offsety2 > y1 + offsety1 + height1):
-        print("y")
         noCollision = False
     return noCollision
 
@@ -101,7 +99,7 @@ while running:
     player_y += math.floor(input_y * player_speed)
 
     # Player bounds check
-    player_xy = boundsCheck(player_x, player_y, 1, 0, 15, 15, screen)
+    player_xy = boundsCheck(player_x, player_y, 0, 0, 15, 15, screen)
     player_x = player_xy[0]
     player_y = player_xy[1]
 
