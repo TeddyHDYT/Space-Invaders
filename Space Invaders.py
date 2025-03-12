@@ -9,7 +9,30 @@ import random
 
 # Load images
 player = pygame.image.load("textures/player.png")
-enemy = pygame.image.load("textures/enemy.png") 
+enemy = pygame.image.load("textures/enemy.png")
+
+# Functions
+def boundsCheck(positionX, positionY, offsetX, offsetY, width, height, screen):
+    positionXY = (positionX, positionY)
+    if 0 > positionX + offsetX:
+        positionXY = (0 - offsetX, positionY)
+    elif screen.get_width() < positionX + offsetX + width:
+        positionXY = (screen.get_width() - width - offsetX, positionY)
+    elif 0 > positionY + offsetY:
+        positionXY = (positionX, 0 - offsetY)
+    elif screen.get_height() < positionY + offsetY + height:
+        positionXY = (positionX, screen.get_height() - offsetY- height)
+    return positionXY
+
+def boxcollisionCheck(x1,y1,offsetx1,offsety1,width1,height1,x2,y2,offsetx2,offsety2,width2,height2):
+    noCollision = True
+    if (x2 + offsetx2 > x1 + offsetx1 + width1) or (x2 + offsetx2 + width2 < x1 + offsetx1):
+        print("x")
+        noCollision = False
+    if (y2 + offsety2 + height2 < y1 + offsety1) or (y2 + offsety2 > y1 + offsety1 + height1):
+        print("y")
+        noCollision = False
+    return noCollision
 
 # Initialize pygame
 pygame.init()
@@ -70,22 +93,18 @@ while running:
 
     # Player speed normalization
     if abs(input_x) + abs(input_y) > 1:
-        input_x = math.floor(input_x / math.sqrt(2))
-        input_y = math.floor(input_y / math.sqrt(2))
+        input_x = input_x / math.sqrt(2)
+        input_y = input_y / math.sqrt(2)
 
     # Update player position
-    player_x += input_x * player_speed
-    player_y += input_y * player_speed
+    player_x += math.floor(input_x * player_speed)
+    player_y += math.floor(input_y * player_speed)
 
-    ''' # Player bounds check
-    if player_xy[0] < -2:
-        player_xy = (-2, player_xy[1])
-    if player_xy[0] > screen.get_width() - 15:
-        player_xy = (screen.get_width() - 15, player_xy[1])
-    if player_xy[1] < 0:
-        player_xy = (player_xy[0], 0)
-    if player_xy[1] > screen.get_height() - 15:
-        player_xy = (player_xy[0], screen.get_height() - 15)'''
+    # Player bounds check
+    player_xy = boundsCheck(player_x, player_y, 1, 0, 15, 15, screen)
+    player_x = player_xy[0]
+    player_y = player_xy[1]
+
 
     # Draw screen
     screen.fill((10, 10, 15))
@@ -96,34 +115,34 @@ while running:
         screen.blit(enemy, enemy_list[i])
     pygame.display.flip()
     clock.tick(30)
-    
+
+
     # Enemy spawn
     if random.randint(0, 100) < 2:
         enemy_list.append((random.randint(0, screen.get_width() - 15), 0))
-    
+
+
     #Enemy update
     for i in range(len(enemy_list)):
         enemy_list[i] = (enemy_list[i][0], enemy_list[i][1] + enemy_speed)
-        if enemy_list[i][1] > screen.get_height():
-            break
 
 
     # Enemy collision
     for i in range(len(enemy_list)):
         i -= 1
         for j in range(len(player_missile_list)):
-            if (player_missile_list[j][0] > enemy_list[i][0] -4 and player_missile_list[j][0] < enemy_list[i][0] + 15 + 4 ) and (player_missile_list[j][1] > enemy_list[i][1] -4 and player_missile_list[j][1] < enemy_list[i][1] + 15 + 4):
-                player_missile_list[j] = (-10, -10, False)
+            if boxcollisionCheck(player_missile_list[j][0], player_missile_list[j][1], 0, 0, 2, 4, enemy_list[i][0], enemy_list[i][1], 0, 0, 15, 15):
                 enemy_list.pop(i)
+                player_missile_list[j] = (-10, -10, False)
                 break
 
 
     # Enemy player collision
     for i in range(len(enemy_list)):
         i -= 1
-        if (player_xy[0] > enemy_list[i][0] - 4 and player_xy[0] < enemy_list[i][0] + 15 + 4) and (player_xy[1] > enemy_list[i][1] -4 and player_xy[1] < enemy_list[i][1] + 15 + 4):
+        if boxcollisionCheck(player_x, player_y, 0, 0, 15, 15, enemy_list[i][0], enemy_list[i][1], 0, 0, 15, 15):
             running = False
-            break
+
 
     # Enemy cleanup 
     for i in range(len(enemy_list)):
