@@ -20,14 +20,18 @@ clock = pygame.time.Clock()
 running = True
 
 # Variables
-player_xy = (screen.get_width() / 2, screen.get_height() - 100)
+player_x = screen.get_width() / 2
+player_y = screen.get_height() - 100
 player_speed = 5
 player_missile_list = []
 player_missile_speed = 15
 player_missile_cooldown = 5 # in frames
 cooldown = 0
-enemy_list = [] 
-enemy_speed = 1 
+enemy_list = []
+enemy_speed = 1
+
+# Bounding boxes
+player_bb = ()
 
 # Main Loop
 while running:
@@ -37,10 +41,10 @@ while running:
 
     # Get pressed keys
     keys = pygame.key.get_pressed()
-    x = keys[pygame.K_d] - keys[pygame.K_a] or keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]
-    y = keys[pygame.K_s] - keys[pygame.K_w] or keys[pygame.K_DOWN] - keys[pygame.K_UP]
+    input_x = keys[pygame.K_d] - keys[pygame.K_a] or keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]
+    input_y = keys[pygame.K_s] - keys[pygame.K_w] or keys[pygame.K_DOWN] - keys[pygame.K_UP]
     if keys[pygame.K_SPACE] and cooldown == 0:
-        player_missile_list.append((player_xy[0] + 7, player_xy[1], True))
+        player_missile_list.append((player_x + 7, player_y, True))
         cooldown = player_missile_cooldown
     if keys[pygame.K_ESCAPE]:
         running = False
@@ -65,14 +69,15 @@ while running:
             break
 
     # Player speed normalization
-    if abs(x) + abs(y) > 1:
-        x = x / math.sqrt(2)
-        y = y / math.sqrt(2)
+    if abs(input_x) + abs(input_y) > 1:
+        input_x = math.floor(input_x / math.sqrt(2))
+        input_y = math.floor(input_y / math.sqrt(2))
 
     # Update player position
-    player_xy = (math.floor(x * player_speed) + player_xy[0], math.floor(y * player_speed) + player_xy[1])
+    player_x += input_x * player_speed
+    player_y += input_y * player_speed
 
-    # Player bounds check
+    ''' # Player bounds check
     if player_xy[0] < -2:
         player_xy = (-2, player_xy[1])
     if player_xy[0] > screen.get_width() - 15:
@@ -80,13 +85,13 @@ while running:
     if player_xy[1] < 0:
         player_xy = (player_xy[0], 0)
     if player_xy[1] > screen.get_height() - 15:
-        player_xy = (player_xy[0], screen.get_height() - 15)
+        player_xy = (player_xy[0], screen.get_height() - 15)'''
 
     # Draw screen
     screen.fill((10, 10, 15))
     for i in range(len(player_missile_list)):
         pygame.draw.rect(screen, (255, 0, 0), (player_missile_list[i][0], player_missile_list[i][1], 2, 4))
-    screen.blit(player, player_xy)
+    screen.blit(player, (player_x, player_y))
     for i in range(len(enemy_list)):
         screen.blit(enemy, enemy_list[i])
     pygame.display.flip()
@@ -125,8 +130,3 @@ while running:
         if enemy_list[i][1] > screen.get_height():
             enemy_list.pop(i)
             break
-
-
-    
-
-
