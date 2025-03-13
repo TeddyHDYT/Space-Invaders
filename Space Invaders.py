@@ -2,6 +2,8 @@
 ### Elijah Brauch und Lukas Neumann
 ### 06.03.2025
 
+# readme.md for more information and instructions
+
 # Imports
 import pygame # Handling Rendering
 import math # For doing Math
