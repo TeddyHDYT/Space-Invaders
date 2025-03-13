@@ -2,6 +2,8 @@
 ### Elijah Brauch und Lukas Neumann
 ### 06.03.2025
 
+# readme.md for more information and instructions
+
 # Imports
 import pygame # Handling Rendering
 import math # For doing Math
@@ -54,31 +56,41 @@ screen = pygame.display.set_mode((400, 300), pygame.SCALED)
 pygame.display.set_caption("Space Invaders")
 pygame.display.set_icon(player)
 clock = pygame.time.Clock()
-running = True
-
-
-
-# Constants
-player_speed = 3
-player_missile_speed = 15
-player_missile_cooldown = 6 # in frames
-
-
 
 ### Variables
+
+# Game
+running = True
+score = 0
+leveltick = 0
+nextLevel_cooldown = 30 # in seconds (at 30 frames per second)
 
 # Player
 player_x = screen.get_width() / 2
 player_y = screen.get_height() - 100
+player_speed = 3
+player_missile_speed = 15
+player_missile_cooldown = 3 # in frames
+player_dash_speed = 10
+player_dash_time = 3 # in frames
+player_dash_cooldown = 10 # in frames
 
 # Missiles
 player_missile_list = []
-cooldown = 0
+missile_cooldown = 0
 fireL = False
+
+# Dash
+dash_cooldown = 0
+dashing = False
+dash_time = 0
+dash_x = 0
+dash_y = 0
 
 #Enemies
 enemy_list = []
 enemy_speed = 1
+enemy_spawnchance = 0.05
 
 # Bounding boxes
 player_bb = (14,16)
@@ -90,7 +102,26 @@ enemy_bb = (16,16)
 
 while running:
 
-    # Event handling Quit
+### Ticks
+
+    # Level tick
+    leveltick += 1
+
+    # Player missile cooldown
+    if missile_cooldown > 0:
+        missile_cooldown -= 1
+    
+    # Player dash cooldown
+    if dash_cooldown > 0:
+        dash_cooldown -= 1
+    
+    # Player dash time
+    if dash_time > 0:
+        dash_time -= 1
+
+
+
+### Event handling Quit
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -106,13 +137,24 @@ while running:
     input_y = keys[pygame.K_s] - keys[pygame.K_w] or keys[pygame.K_DOWN] - keys[pygame.K_UP]
 
     # Fire
-    if keys[pygame.K_SPACE] and cooldown == 0:
+    if keys[pygame.K_SPACE] and missile_cooldown == 0:
         if fireL:
             player_missile_list.append((player_x + 1, player_y, True))
         else:
             player_missile_list.append((player_x + 14, player_y, True))
         fireL = not fireL
-        cooldown = player_missile_cooldown
+        missile_cooldown = player_missile_cooldown
+    
+    if keys[pygame.K_LSHIFT] and dash_cooldown == 0 and (input_x != 0 or input_y != 0):
+        dashing = True
+        dash_x = input_x
+        dash_y = input_y
+        dash_time = player_dash_time
+        dash_cooldown = player_dash_cooldown
+    if dashing and dash_time == 0:
+        dashing = False
+
+
     
     # Quit
     if keys[pygame.K_ESCAPE]:
@@ -131,18 +173,11 @@ while running:
 
 
 
-    # Player missile cooldown
-    if cooldown > 0:
-        cooldown -= 1
-
-
-
     # Player missile cleanup
-    for i in range(len(player_missile_list)):
-        i -= 1
-        if not player_missile_list[i][2]:
-            player_missile_list.pop(i)
-            break
+    try: 
+        player_missile_list.remove((-10, -10, False))
+    except:
+        pass
 
 
 
@@ -156,8 +191,12 @@ while running:
 
 
     # Update player position
-    player_x += math.floor(input_x * player_speed)
-    player_y += math.floor(input_y * player_speed)
+    if dashing:
+        player_x += math.floor(dash_x * player_dash_speed)
+        player_y += math.floor(dash_y * player_dash_speed)
+    else:
+        player_x += math.floor(input_x * player_speed)
+        player_y += math.floor(input_y * player_speed)
 
 
 
@@ -171,25 +210,42 @@ while running:
 ### Enemy Logic
 
     # Enemy spawn
-    if random.randint(0, 100) < 2:
-        enemy_list.append((random.randint(0, screen.get_width() - 15), 0))
+    if random.randint(0, int(nextLevel_cooldown*30 / enemy_spawnchance)) < leveltick and leveltick < nextLevel_cooldown*30:
+        randomEnemy = random.randint(0, screen.get_width() - 16), 0, True
+
+        validspawn = True
+        for i in range(len(enemy_list)):
+            if boxcollisionCheck(randomEnemy[0], randomEnemy[1], enemy_bb, enemy_list[i][0], enemy_list[i][1], enemy_bb):
+                validspawn = False
+                break
+        if validspawn:
+            enemy_list.append(randomEnemy)
 
 
 
     #Enemy update
     for i in range(len(enemy_list)):
-        enemy_list[i] = (enemy_list[i][0], enemy_list[i][1] + enemy_speed)
+        enemy_list[i] = (enemy_list[i][0], enemy_list[i][1] + enemy_speed, True)
+    
+    if leveltick >= nextLevel_cooldown * 30 and len(enemy_list) == 0:
+        enemy_speed += 1
+        leveltick = 0
 
 
 
-    # Enemy collision
+    # Enemy missile collision
     for i in range(len(enemy_list)):
         i -= 1
         for j in range(len(player_missile_list)):
+            j -= 1
             if boxcollisionCheck(player_missile_list[j][0], player_missile_list[j][1], (1,3), enemy_list[i][0], enemy_list[i][1], enemy_bb):
-                enemy_list.pop(i)
+                enemy_list[i] = (-100, -100, False)
                 player_missile_list[j] = (-10, -10, False)
+                score += 50
                 break
+        if enemy_list[i][1] > screen.get_height():
+            enemy_list[i] = (-100, -100, False)
+            break
 
 
 
@@ -201,12 +257,12 @@ while running:
 
 
 
-    # Enemy cleanup 
-    for i in range(len(enemy_list)):
-        if enemy_list[i][1] > screen.get_height():
-            enemy_list.pop(i)
-            break
-
+    # Enemy cleanup
+    try:
+        enemy_list.remove((-100, -100, False))
+    except:
+        pass
+        
 
 
 ### Rendering
@@ -223,10 +279,11 @@ while running:
 
     # Draw enemies
     for i in range(len(enemy_list)):
-        screen.blit(enemy, enemy_list[i])
+        screen.blit(enemy, (enemy_list[i][0], enemy_list[i][1]))
     
     # Draw Texts
-    screen.blit(font.render("FPS: " + str(int(clock.get_fps())), False, (255, 255, 255)), (0, 0)) # FPS
+    scoreText = font.render(str(score), False, (255, 255, 255))
+    screen.blit(scoreText, ((screen.get_width() - scoreText.get_width()) / 2, 10)) # Score
 
     # Update screen
     pygame.display.flip()
