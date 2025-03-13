@@ -313,13 +313,13 @@ while running:
         screen.fill((0, 0, 0))
         gameOverText = font.render("Game Over", False, (255, 0, 0))
         finalScoreText = font.render(f"Score: {score}", False, (255, 255, 255))
-        restartText = font.render("Press R to Restart", False, (255, 255, 255))
+        restartText = font.render("Press R to Restart or ESC to Quit", False, (255, 255, 255))
         screen.blit(gameOverText, ((screen.get_width() - gameOverText.get_width()) / 2, screen.get_height() / 2 - 40))
         screen.blit(finalScoreText, ((screen.get_width() - finalScoreText.get_width()) / 2, screen.get_height() / 2))
         screen.blit(restartText, ((screen.get_width() - restartText.get_width()) / 2, screen.get_height() / 2 + 40))
         pygame.display.flip()
         
-        # Wait for restart
+        # Wait for restart or quit
         waiting_for_restart = True
         while waiting_for_restart:
             for event in pygame.event.get():
@@ -327,21 +327,26 @@ while running:
                     waiting_for_restart = False
                     pygame.quit()
                     exit()
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                    waiting_for_restart = False
-                    running = True
-                    score = 0
-                    leveltick = 0
-                    player_x = screen.get_width() / 2
-                    player_y = screen.get_height() - 100
-                    player_missile_list = []
-                    missile_cooldown = 0
-                    dash_cooldown = 0
-                    dashing = False
-                    dash_time = 0
-                    dash_x = 0
-                    dash_y = 0
-                    enemy_list = []
-                    enemy_speed = 1
-                    enemy_max = enemy_maxInit
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        waiting_for_restart = False
+                        running = True
+                        score = 0
+                        leveltick = 0
+                        player_x = screen.get_width() / 2
+                        player_y = screen.get_height() - 100
+                        player_missile_list = []
+                        missile_cooldown = 0
+                        dash_cooldown = 0
+                        dashing = False
+                        dash_time = 0
+                        dash_x = 0
+                        dash_y = 0
+                        enemy_list = []
+                        enemy_speed = 1
+                        enemy_max = enemy_maxInit
+                    elif event.key == pygame.K_ESCAPE:
+                        waiting_for_restart = False
+                        pygame.quit()
+                        exit()
 
