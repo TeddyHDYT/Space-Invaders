@@ -12,23 +12,23 @@ player = pygame.image.load("textures/player.png")
 enemy = pygame.image.load("textures/enemy.png")
 
 # Functions
-def boundsCheck(positionX, positionY, offsetX, offsetY, width, height, screen):
-    if 0 > positionX + offsetX:
-        positionX = 0 - offsetX
-    elif screen.get_width() < positionX + offsetX + width:
-        positionX = screen.get_width() - width - offsetX
-    if 0 > positionY + offsetY:
-        positionY = 0 - offsetY
-    elif screen.get_height() < positionY + offsetY + height:
-        positionY = screen.get_height() - offsetY- height
+def boundsCheck(positionX, positionY, width, height, screen):
+    if 0 > positionX:
+        positionX = 0
+    elif screen.get_width() < positionX + width:
+        positionX = screen.get_width() - width
+    if 0 > positionY:
+        positionY = 0 
+    elif screen.get_height() < positionY + height:
+        positionY = screen.get_height() - height
     positionXY = (positionX, positionY)
     return positionXY
 
-def boxcollisionCheck(x1,y1,offsetx1,offsety1,width1,height1,x2,y2,offsetx2,offsety2,width2,height2):
+def boxcollisionCheck(x1,y1,width1,height1,x2,y2,width2,height2):
     noCollision = True
-    if (x2 + offsetx2 > x1 + offsetx1 + width1) or (x2 + offsetx2 + width2 < x1 + offsetx1):
+    if (x2 > x1  + width1) or (x2 + width2 < x1):
         noCollision = False
-    if (y2 + offsety2 + height2 < y1 + offsety1) or (y2 + offsety2 > y1 + offsety1 + height1):
+    if (y2 + height2 < y1) or (y2 > y1 + height1):
         noCollision = False
     return noCollision
 
@@ -40,14 +40,17 @@ pygame.display.set_icon(player)
 clock = pygame.time.Clock()
 running = True
 
+# Constants
+player_speed = 3
+player_missile_speed = 15
+player_missile_cooldown = 6 # in frames
+
 # Variables
 player_x = screen.get_width() / 2
 player_y = screen.get_height() - 100
-player_speed = 5
 player_missile_list = []
-player_missile_speed = 15
-player_missile_cooldown = 5 # in frames
 cooldown = 0
+fireL = False
 enemy_list = []
 enemy_speed = 1
 
@@ -65,7 +68,11 @@ while running:
     input_x = keys[pygame.K_d] - keys[pygame.K_a] or keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]
     input_y = keys[pygame.K_s] - keys[pygame.K_w] or keys[pygame.K_DOWN] - keys[pygame.K_UP]
     if keys[pygame.K_SPACE] and cooldown == 0:
-        player_missile_list.append((player_x + 7, player_y, True))
+        if fireL:
+            player_missile_list.append((player_x + 1, player_y, True))
+        else:
+            player_missile_list.append((player_x + 14, player_y, True))
+        fireL = not fireL
         cooldown = player_missile_cooldown
     if keys[pygame.K_ESCAPE]:
         running = False
@@ -99,7 +106,7 @@ while running:
     player_y += math.floor(input_y * player_speed)
 
     # Player bounds check
-    player_xy = boundsCheck(player_x, player_y, 0, 0, 15, 15, screen)
+    player_xy = boundsCheck(player_x, player_y, 14, 16, screen)
     player_x = player_xy[0]
     player_y = player_xy[1]
 
@@ -107,7 +114,7 @@ while running:
     # Draw screen
     screen.fill((10, 10, 15))
     for i in range(len(player_missile_list)):
-        pygame.draw.rect(screen, (255, 0, 0), (player_missile_list[i][0], player_missile_list[i][1], 2, 4))
+        pygame.draw.rect(screen, (255, 0, 0), (player_missile_list[i][0], player_missile_list[i][1], 1, 3))
     screen.blit(player, (player_x, player_y))
     for i in range(len(enemy_list)):
         screen.blit(enemy, enemy_list[i])
@@ -129,7 +136,7 @@ while running:
     for i in range(len(enemy_list)):
         i -= 1
         for j in range(len(player_missile_list)):
-            if boxcollisionCheck(player_missile_list[j][0], player_missile_list[j][1], 0, 0, 2, 4, enemy_list[i][0], enemy_list[i][1], 0, 0, 15, 15):
+            if boxcollisionCheck(player_missile_list[j][0], player_missile_list[j][1], 2, 4, enemy_list[i][0], enemy_list[i][1], 16, 16):
                 enemy_list.pop(i)
                 player_missile_list[j] = (-10, -10, False)
                 break
@@ -138,7 +145,7 @@ while running:
     # Enemy player collision
     for i in range(len(enemy_list)):
         i -= 1
-        if boxcollisionCheck(player_x, player_y, 0, 0, 15, 15, enemy_list[i][0], enemy_list[i][1], 0, 0, 15, 15):
+        if boxcollisionCheck(player_x, player_y, 14, 16, enemy_list[i][0], enemy_list[i][1], 16, 16):
             running = False
 
 
