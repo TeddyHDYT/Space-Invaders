@@ -18,7 +18,7 @@ enemy = pygame.image.load("textures/enemy.png")
 
 #### Functions
 
-# Bounds check
+# Return position in bounds
 def boundsCheck(positionX, positionY, boundingBox, screen): # BoundingBox = (width, height), x,y = position from top left
     width = boundingBox[0]
     height = boundingBox[1]
@@ -34,7 +34,7 @@ def boundsCheck(positionX, positionY, boundingBox, screen): # BoundingBox = (wid
     return positionXY
 
 
-# Collision check for two Boxes
+# Collision check for two Boxes, returns True if no collision
 def boxcollisionCheck(x1,y1,boundingBox1,x2,y2,boundingBox2): # BoundingBox = (width, height), x,y = position from top left
     width1 = boundingBox1[0]
     height1 = boundingBox1[1]
@@ -51,10 +51,11 @@ def boxcollisionCheck(x1,y1,boundingBox1,x2,y2,boundingBox2): # BoundingBox = (w
 
 ### Initialize pygame
 pygame.init()
-font = pygame.font.SysFont("Agencyr", 32)
-screen = pygame.display.set_mode((400, 300), pygame.SCALED)
-pygame.display.set_caption("Space Invaders")
-pygame.display.set_icon(player)
+
+font = pygame.font.SysFont("Agencyr", 32) # get font from system
+screen = pygame.display.set_mode((400, 300), pygame.SCALED) # create display
+pygame.display.set_caption("Space Invaders") # set name
+pygame.display.set_icon(player) # set icon
 clock = pygame.time.Clock()
 
 ### Variables
@@ -90,7 +91,10 @@ dash_y = 0
 #Enemies
 enemy_list = []
 enemy_speed = 1
-enemy_spawnchance = 0.05
+enemy_spawnchance = 0.1
+enemy_maxInit = 3
+enemy_max = enemy_maxInit
+enemy_maxIncrease = 2
 
 # Bounding boxes
 player_bb = (14,16)
@@ -210,8 +214,8 @@ while running:
 ### Enemy Logic
 
     # Enemy spawn
-    if random.randint(0, int(nextLevel_cooldown*30 / enemy_spawnchance)) < leveltick and leveltick < nextLevel_cooldown*30:
-        randomEnemy = random.randint(0, screen.get_width() - 16), 0, True
+    if random.randint(0, 100) < enemy_spawnchance * 100 and len(enemy_list) < enemy_max and leveltick < nextLevel_cooldown*30:
+        randomEnemy = random.randint(0, screen.get_width() - 16), -20, True
 
         validspawn = True
         for i in range(len(enemy_list)):
@@ -227,7 +231,13 @@ while running:
     for i in range(len(enemy_list)):
         enemy_list[i] = (enemy_list[i][0], enemy_list[i][1] + enemy_speed, True)
     
+    # Increase max enemies
+    if leveltick % 300 == 0:
+        enemy_max += enemy_maxIncrease
+
+    # Next level
     if leveltick >= nextLevel_cooldown * 30 and len(enemy_list) == 0:
+        enemy_max = enemy_maxInit
         enemy_speed += 1
         leveltick = 0
 
