@@ -18,6 +18,61 @@ enemy_destroyed_texture = pygame.image.load("textures/enemy_dying.png")
 asteroid_texture = pygame.image.load("textures/asteroid.png")
 
 
+
+### Variables
+
+# Game
+running = True
+score = 0
+currentLevel = 1
+leveltick = 0 # Frames since last level change
+nextLevel_cooldown = 30 # in seconds (at 30 frames per second)
+
+# Player
+player_x = 0
+player_y = 0
+player_speed = 3
+player_missile_speed = 15
+player_missile_cooldown = 3 # in frames
+player_dash_speed = 10
+player_dash_time = 3 # in frames
+player_dash_cooldown = 10 # in frames
+
+# Missiles
+player_missile_list = [] # stores (x, y, alive)
+missile_cooldown = 0
+fireL = False
+
+# Dash
+dash_cooldown = 0
+dashing = False
+dash_time = 0
+dash_x = 0
+dash_y = 0
+
+#Enemies
+enemy_list = [] # stores (x, y, alive)
+enemy_speed = 1
+enemy_spawnchance = 0.1
+enemy_maxInit = 3 # max enemies on screen at start of level
+enemy_max = enemy_maxInit # max enemies on screen
+enemy_maxIncrease = 2 # increase max enemies by this over time in a level
+enemy_increaseRate = 300 # increase max enemies every x frames
+
+# Asteroids
+asteroid_list = []# stores (x, y, alive, travels left)
+asteroid_speed = 1
+asteroid_spawnchance = 0.2
+asteroid_max = 5 # max asteroids on screen
+asteroid_maxIncease = 3 # Increase number of asterdoids by this much each level
+
+# Bounding boxes
+player_bb = (14,16)
+enemy_bb = (16,16)
+asteroid_bb = (16,16)
+
+
+
 #### Functions
 
 # Return position in bounds
@@ -60,55 +115,9 @@ pygame.display.set_caption("Space Invaders") # set name
 pygame.display.set_icon(player_texture) # set icon
 clock = pygame.time.Clock()
 
-### Variables
-
-# Game
-running = True
-score = 0
-leveltick = 0 # Frames since last level change
-nextLevel_cooldown = 30 # in seconds (at 30 frames per second)
-
-# Player
 player_x = screen.get_width() / 2
 player_y = screen.get_height() - 100
-player_speed = 3
-player_missile_speed = 15
-player_missile_cooldown = 3 # in frames
-player_dash_speed = 10
-player_dash_time = 3 # in frames
-player_dash_cooldown = 10 # in frames
 
-# Missiles
-player_missile_list = [] # stores (x, y, alive)
-missile_cooldown = 0
-fireL = False
-
-# Dash
-dash_cooldown = 0
-dashing = False
-dash_time = 0
-dash_x = 0
-dash_y = 0
-
-#Enemies
-enemy_list = [] # stores (x, y, alive)
-enemy_speed = 1
-enemy_spawnchance = 0.1
-enemy_maxInit = 3 # max enemies on screen at start of level
-enemy_max = enemy_maxInit # max enemies on screen
-enemy_maxIncrease = 2 # increase max enemies by this over time in a level
-enemy_increaseRate = 300 # increase max enemies every x frames
-
-# Asteroids
-asteroid_list = []# stores (x, y, alive, travels left)
-asteroid_speed = 1
-asteroid_spawnchance = 1
-
-
-# Bounding boxes
-player_bb = (14,16)
-enemy_bb = (16,16)
-asteroid_bb = (16,16)
 
 
 ### Main Loop
@@ -131,6 +140,14 @@ while True:
     # Player dash time
     if dash_time > 0:
         dash_time -= 1
+    
+    # Next level
+    if leveltick >= nextLevel_cooldown * 30 and len(enemy_list) == 0:
+        enemy_max = enemy_maxInit
+        enemy_speed += 1
+        asteroid_max += asteroid_maxIncease
+        leveltick = 0
+        currentLevel += 1
 
 
 
@@ -223,6 +240,7 @@ while True:
 ### Enemy Logic
 
     # Enemy spawn
+    # increase amount of Enemy over duration of level
     if random.randint(0, 100) < enemy_spawnchance * 100 and len(enemy_list) < enemy_max and leveltick < nextLevel_cooldown*30:
         randomEnemy = random.randint(0, screen.get_width() - 16), -20, True
 
@@ -244,13 +262,8 @@ while True:
     if leveltick % enemy_increaseRate == 0:
         enemy_max += enemy_maxIncrease
 
-    # Next level
-    if leveltick >= nextLevel_cooldown * 30 and len(enemy_list) == 0:
-        enemy_max = enemy_maxInit
-        enemy_speed += 1
-        leveltick = 0
-
-
+        
+    
     # Enemy missile collision
     for i in range(len(enemy_list)):
         i -= 1
@@ -293,7 +306,7 @@ while True:
   ### Asteroid Logic
 
      # Asteroid spawn
-    if random.randint(0, 100) < asteroid_spawnchance * 100 and len(asteroid_list) < 5 and leveltick < nextLevel_cooldown*30:
+    if random.randint(0, 100) < asteroid_spawnchance * 100 and len(asteroid_list) < asteroid_max and leveltick < nextLevel_cooldown*30:
         direction = random.randint(0,1)
         if direction == 0:
             randomAsteroid = -20, random.randint(0, screen.get_height() - 16), True, False # last bool = travels left
