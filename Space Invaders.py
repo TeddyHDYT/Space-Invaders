@@ -12,7 +12,10 @@ import random # For random numbers
 
 # Load textures
 player = pygame.image.load("textures/player.png")
+player_destroyed = pygame.image.load("textures/player_dying.png")
 enemy = pygame.image.load("textures/enemy.png")
+enemy_destroyed = pygame.image.load("textures/enemy_dying.png")
+asteroid = pygame.image.load("textures/asteroid.png")
 
 
 
@@ -63,7 +66,7 @@ clock = pygame.time.Clock()
 # Game
 running = True
 score = 0
-leveltick = 0
+leveltick = 0 # Frames since last level change
 nextLevel_cooldown = 30 # in seconds (at 30 frames per second)
 
 # Player
@@ -77,7 +80,7 @@ player_dash_time = 3 # in frames
 player_dash_cooldown = 10 # in frames
 
 # Missiles
-player_missile_list = []
+player_missile_list = [] # stores (x, y, alive)
 missile_cooldown = 0
 fireL = False
 
@@ -89,12 +92,13 @@ dash_x = 0
 dash_y = 0
 
 #Enemies
-enemy_list = []
+enemy_list = [] # stores (x, y, alive)
 enemy_speed = 1
 enemy_spawnchance = 0.1
-enemy_maxInit = 3
-enemy_max = enemy_maxInit
-enemy_maxIncrease = 2
+enemy_maxInit = 3 # max enemies on screen at start of level
+enemy_max = enemy_maxInit # max enemies on screen
+enemy_maxIncrease = 2 # increase max enemies by this over time in a level
+enemy_increaseRate = 300 # increase max enemies every x frames
 
 # Bounding boxes
 player_bb = (14,16)
@@ -232,7 +236,7 @@ while running:
         enemy_list[i] = (enemy_list[i][0], enemy_list[i][1] + enemy_speed, True)
     
     # Increase max enemies
-    if leveltick % 300 == 0:
+    if leveltick % enemy_increaseRate == 0:
         enemy_max += enemy_maxIncrease
 
     # Next level
