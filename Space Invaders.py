@@ -314,16 +314,17 @@ while True:
             running = False
     
     # Asteroid missile collision
-    for i in range(len(enemy_list)):
+    for i in range(len(player_missile_list)):
         i -= 1
         for j in range(len(asteroid_list)):
             j -= 1
-            if boxcollisionCheck(asteroid_list[j][0], asteroid_list[j][1], (1,3), enemy_list[i][0], enemy_list[i][1], enemy_bb):
-                player_missile_list[j] = (-10, -10, False)
+            if boxcollisionCheck(asteroid_list[j][0], asteroid_list[j][1], asteroid_bb, player_missile_list[i][0], player_missile_list[i][1], (1,3)):
+                player_missile_list[i] = (-10, -10, False)
                 break
 
     # Asteriod bounde collision
     for i in range(len(asteroid_list)):
+        i -= 1
         if asteroid_list[i][3]:
             if asteroid_list[i][0] < -20 :
                 asteroid_list[i] = (-200, -200, False, False)
@@ -336,7 +337,6 @@ while True:
         asteroid_list.remove((-200, -200, False, False))
     except:
         pass
-    print(len(asteroid_list))
 
 
 
