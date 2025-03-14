@@ -68,7 +68,6 @@ running = True
 score = 0
 leveltick = 0 # Frames since last level change
 nextLevel_cooldown = 30 # in seconds (at 30 frames per second)
-between_levels = False
 
 # Player
 player_x = screen.get_width() / 2
@@ -109,7 +108,7 @@ enemy_bb = (16,16)
 
 ### Main Loop
 
-while running:
+while True:
 
 ### Ticks
 
@@ -133,8 +132,7 @@ while running:
 ### Event handling Quit
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
-
+            pygame.quit()
 
 
 ### Get pressed keys
@@ -243,12 +241,9 @@ while running:
 
     # Next level
     if leveltick >= nextLevel_cooldown * 30 and len(enemy_list) == 0:
-        between_levels = True
         enemy_max = enemy_maxInit
         enemy_speed += 1
         leveltick = 0
-    else:
-        between_levels = False
 
 
     # Enemy missile collision
@@ -268,11 +263,10 @@ while running:
 
 
     # Enemy player collision
-    if not between_levels:
-        for i in range(len(enemy_list)):
-            i -= 1
-            if boxcollisionCheck(player_x, player_y, player_bb, enemy_list[i][0], enemy_list[i][1], enemy_bb):
-                running = False
+    for i in range(len(enemy_list)):
+        i -= 1
+        if boxcollisionCheck(player_x, player_y, player_bb, enemy_list[i][0], enemy_list[i][1], enemy_bb):
+            running = False
 
 
     # Enemy cleanup
@@ -281,12 +275,8 @@ while running:
     except:
         pass
 
-    # Check if any enemy hits the lower border
-    if not between_levels:
-        for enemy_pos in enemy_list:
-            if enemy_pos[1] + enemy_bb[1] >= screen.get_height():
-                running = False
-                break
+
+
 ### Rendering
 
     # Clear screen
