@@ -12,8 +12,11 @@ import random # For random numbers
 
 # Load textures
 player = pygame.image.load("textures/player.png")
+player_destroyed = pygame.image.load("textures/player_dying.png")
 enemy = pygame.image.load("textures/enemy.png")
 asteroid_texture = pygame.image.load("textures/asteroid.png")
+enemy_destroyed = pygame.image.load("textures/enemy_dying.png")
+asteroid = pygame.image.load("textures/asteroid.png")
 
 
 #### Functions
@@ -63,9 +66,8 @@ clock = pygame.time.Clock()
 # Game
 running = True
 score = 0
-leveltick = 0
+leveltick = 0 # Frames since last level change
 nextLevel_cooldown = 30 # in seconds (at 30 frames per second)
-between_levels = False
 
 # Player
 player_x = screen.get_width() / 2
@@ -78,7 +80,7 @@ player_dash_time = 3 # in frames
 player_dash_cooldown = 10 # in frames
 
 # Missiles
-player_missile_list = []
+player_missile_list = [] # stores (x, y, alive)
 missile_cooldown = 0
 fireL = False
 
@@ -90,12 +92,13 @@ dash_x = 0
 dash_y = 0
 
 #Enemies
-enemy_list = []
+enemy_list = [] # stores (x, y, alive)
 enemy_speed = 1
 enemy_spawnchance = 0.1
-enemy_maxInit = 3
-enemy_max = enemy_maxInit
-enemy_maxIncrease = 2
+enemy_maxInit = 3 # max enemies on screen at start of level
+enemy_max = enemy_maxInit # max enemies on screen
+enemy_maxIncrease = 2 # increase max enemies by this over time in a level
+enemy_increaseRate = 300 # increase max enemies every x frames
 
 # Asteroids
 asteroid_list = []
@@ -111,7 +114,7 @@ asteroid_bb = (16,16)
 
 ### Main Loop
 
-while running:
+while True:
 
 ### Ticks
 
@@ -135,8 +138,7 @@ while running:
 ### Event handling Quit
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
-
+            pygame.quit()
 
 
 ### Get pressed keys
@@ -240,17 +242,14 @@ while running:
         enemy_list[i] = (enemy_list[i][0], enemy_list[i][1] + enemy_speed, True)
     
     # Increase max enemies
-    if leveltick % 300 == 0:
+    if leveltick % enemy_increaseRate == 0:
         enemy_max += enemy_maxIncrease
 
     # Next level
     if leveltick >= nextLevel_cooldown * 30 and len(enemy_list) == 0:
-        between_levels = True
         enemy_max = enemy_maxInit
         enemy_speed += 1
         leveltick = 0
-    else:
-        between_levels = False
 
 
     # Enemy missile collision
@@ -270,11 +269,10 @@ while running:
 
 
     # Enemy player collision
-    if not between_levels:
-        for i in range(len(enemy_list)):
-            i -= 1
-            if boxcollisionCheck(player_x, player_y, player_bb, enemy_list[i][0], enemy_list[i][1], enemy_bb):
-                running = False
+    for i in range(len(enemy_list)):
+        i -= 1
+        if boxcollisionCheck(player_x, player_y, player_bb, enemy_list[i][0], enemy_list[i][1], enemy_bb):
+            running = False
 
 
     # Enemy cleanup
@@ -283,16 +281,9 @@ while running:
     except:
         pass
 
-    # Check if any enemy hits the lower border
-    if not between_levels:
-        for enemy_pos in enemy_list:
-            if enemy_pos[1] + enemy_bb[1] >= screen.get_height():
-                running = False
-                break
-
-
-
-    ### Asteroid Logic
+    
+  
+  ### Asteroid Logic
 
      # Asteroid spawn
     if random.randint(0, 100) < asteroid_spawnchance * 100 and len(asteroid_list) < 5 and leveltick < nextLevel_cooldown*30:
@@ -329,6 +320,8 @@ while running:
         asteroid_list.remove((-100, -100, False))
     except:
         pass
+
+
 
 ### Rendering
 
