@@ -13,7 +13,7 @@ import random # For random numbers
 # Load textures
 player = pygame.image.load("textures/player.png")
 enemy = pygame.image.load("textures/enemy.png")
-
+asteroid_texture = pygame.image.load("textures/asteroid.png")
 
 
 #### Functions
@@ -97,10 +97,16 @@ enemy_maxInit = 3
 enemy_max = enemy_maxInit
 enemy_maxIncrease = 2
 
+# Asteroids
+asteroid_list = []
+asteroid_speed = 1
+asteroid_spawnchance = 1
+
+
 # Bounding boxes
 player_bb = (14,16)
 enemy_bb = (16,16)
-
+asteroid_bb = (16,16)
 
 
 ### Main Loop
@@ -283,6 +289,47 @@ while running:
             if enemy_pos[1] + enemy_bb[1] >= screen.get_height():
                 running = False
                 break
+
+
+
+    ### Asteroid Logic
+
+     # Asteroid spawn
+    if random.randint(0, 100) < asteroid_spawnchance * 100 and len(asteroid_list) < 5 and leveltick < nextLevel_cooldown*30:
+        randomAsteroid = random.randint(0, screen.get_width() - 16), -20, True
+        print("1")
+
+    # Asteroid update
+    for i in range(len(asteroid_list)):
+        asteroid_list[i] = (asteroid_list[i][0], asteroid_list[i][1] + asteroid_speed, True)
+
+    # Asteroid missile collision
+    for i in range(len(asteroid_list)):
+        i -= 1
+        for j in range(len(player_missile_list)):
+            j -= 1
+            if boxcollisionCheck(player_missile_list[j][0], player_missile_list[j][1], (1, 3), asteroid_list[i][0], asteroid_list[i][1], asteroid_bb):
+                asteroid_list[i] = (-100, -100, False)
+                player_missile_list[j] = (-10, -10, False)
+                score += 20
+                break
+            if asteroid_list[i][1] > screen.get_height():
+                asteroid_list[i] = (-100, -100, False)
+                break
+
+    # Asteroid player collision    
+    if not between_levels:
+        for i in range(len(asteroid_list)):
+            i -= 1
+            if boxcollisionCheck(player_x, player_y, player_bb, asteroid_list[i][0], asteroid_list[i][1], asteroid_bb):
+                running = False
+
+    # Asteroid cleanup
+    try:
+        asteroid_list.remove((-100, -100, False))
+    except:
+        pass
+
 ### Rendering
 
     # Clear screen
@@ -302,6 +349,10 @@ while running:
     # Draw Texts
     scoreText = font.render(str(score), False, (255, 255, 255))
     screen.blit(scoreText, ((screen.get_width() - scoreText.get_width()) / 2, 10)) # Score
+
+    # Draw asteroids
+    for asteroid in asteroid_list:
+        screen.blit(asteroid_texture, (asteroid[0], asteroid[1]))
 
     # Update screen
     pygame.display.flip()
