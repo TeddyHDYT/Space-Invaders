@@ -65,6 +65,7 @@ running = True
 score = 0
 leveltick = 0
 nextLevel_cooldown = 30 # in seconds (at 30 frames per second)
+between_levels = False
 
 # Player
 player_x = screen.get_width() / 2
@@ -149,6 +150,7 @@ while running:
         fireL = not fireL
         missile_cooldown = player_missile_cooldown
     
+    # Dash
     if keys[pygame.K_LSHIFT] and dash_cooldown == 0 and (input_x != 0 or input_y != 0):
         dashing = True
         dash_x = input_x
@@ -162,7 +164,7 @@ while running:
     
     # Quit
     if keys[pygame.K_ESCAPE]:
-        running = False
+        quit()
 
 
 
@@ -237,10 +239,12 @@ while running:
 
     # Next level
     if leveltick >= nextLevel_cooldown * 30 and len(enemy_list) == 0:
+        between_levels = True
         enemy_max = enemy_maxInit
         enemy_speed += 1
         leveltick = 0
-
+    else:
+        between_levels = False
 
 
     # Enemy missile collision
@@ -260,11 +264,11 @@ while running:
 
 
     # Enemy player collision
-    for i in range(len(enemy_list)):
-        i -= 1
-        if boxcollisionCheck(player_x, player_y, player_bb, enemy_list[i][0], enemy_list[i][1], enemy_bb):
-            running = False
-
+    if not between_levels:
+        for i in range(len(enemy_list)):
+            i -= 1
+            if boxcollisionCheck(player_x, player_y, player_bb, enemy_list[i][0], enemy_list[i][1], enemy_bb):
+                running = False
 
 
     # Enemy cleanup
@@ -272,9 +276,13 @@ while running:
         enemy_list.remove((-100, -100, False))
     except:
         pass
-        
 
-
+    # Check if any enemy hits the lower border
+    if not between_levels:
+        for enemy_pos in enemy_list:
+            if enemy_pos[1] + enemy_bb[1] >= screen.get_height():
+                running = False
+                break
 ### Rendering
 
     # Clear screen
@@ -298,3 +306,47 @@ while running:
     # Update screen
     pygame.display.flip()
     clock.tick(30)
+
+
+    # Restart button
+    if not running:
+        screen.fill((0, 0, 0))
+        gameOverText = font.render("Game Over", False, (255, 0, 0))
+        finalScoreText = font.render(f"Score: {score}", False, (255, 255, 255))
+        restartText = font.render("Press R to Restart or ESC to Quit", False, (255, 255, 255))
+        screen.blit(gameOverText, ((screen.get_width() - gameOverText.get_width()) / 2, screen.get_height() / 2 - 40))
+        screen.blit(finalScoreText, ((screen.get_width() - finalScoreText.get_width()) / 2, screen.get_height() / 2))
+        screen.blit(restartText, ((screen.get_width() - restartText.get_width()) / 2, screen.get_height() / 2 + 40))
+        pygame.display.flip()
+        
+        # Wait for restart or quit
+        waiting_for_restart = True
+        while waiting_for_restart:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    waiting_for_restart = False
+                    pygame.quit()
+                    exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        waiting_for_restart = False
+                        running = True
+                        score = 0
+                        leveltick = 0
+                        player_x = screen.get_width() / 2
+                        player_y = screen.get_height() - 100
+                        player_missile_list = []
+                        missile_cooldown = 0
+                        dash_cooldown = 0
+                        dashing = False
+                        dash_time = 0
+                        dash_x = 0
+                        dash_y = 0
+                        enemy_list = []
+                        enemy_speed = 1
+                        enemy_max = enemy_maxInit
+                    elif event.key == pygame.K_ESCAPE:
+                        waiting_for_restart = False
+                        pygame.quit()
+                        exit()
+
