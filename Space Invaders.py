@@ -11,12 +11,11 @@ import random # For random numbers
 
 
 # Load textures
-player = pygame.image.load("textures/player.png")
-player_destroyed = pygame.image.load("textures/player_dying.png")
-enemy = pygame.image.load("textures/enemy.png")
+player_texture = pygame.image.load("textures/player.png")
+player_destroyed_texture = pygame.image.load("textures/player_dying.png")
+enemy_texture = pygame.image.load("textures/enemy.png")
+enemy_destroyed_texture = pygame.image.load("textures/enemy_dying.png")
 asteroid_texture = pygame.image.load("textures/asteroid.png")
-enemy_destroyed = pygame.image.load("textures/enemy_dying.png")
-asteroid = pygame.image.load("textures/asteroid.png")
 
 
 #### Functions
@@ -58,7 +57,7 @@ pygame.init()
 font = pygame.font.SysFont("Agencyr", 32) # get font from system
 screen = pygame.display.set_mode((400, 300), pygame.SCALED) # create display
 pygame.display.set_caption("Space Invaders") # set name
-pygame.display.set_icon(player) # set icon
+pygame.display.set_icon(player_texture) # set icon
 clock = pygame.time.Clock()
 
 ### Variables
@@ -101,7 +100,7 @@ enemy_maxIncrease = 2 # increase max enemies by this over time in a level
 enemy_increaseRate = 300 # increase max enemies every x frames
 
 # Asteroids
-asteroid_list = []
+asteroid_list = []# stores (x, y, alive, travels left)
 asteroid_speed = 1
 asteroid_spawnchance = 1
 
@@ -274,6 +273,14 @@ while True:
         if boxcollisionCheck(player_x, player_y, player_bb, enemy_list[i][0], enemy_list[i][1], enemy_bb):
             running = False
 
+    # Enemy asteroid collision
+    for i in range(len(enemy_list)):
+        i -= 1
+        for j in range(len(asteroid_list)):
+            j -= 1
+            if boxcollisionCheck(asteroid_list[j][0], asteroid_list[j][1], asteroid_bb, enemy_list[i][0], enemy_list[i][1], enemy_bb):
+                enemy_list[i] = (-100, -100, False)
+                break
 
     # Enemy cleanup
     try:
@@ -287,39 +294,49 @@ while True:
 
      # Asteroid spawn
     if random.randint(0, 100) < asteroid_spawnchance * 100 and len(asteroid_list) < 5 and leveltick < nextLevel_cooldown*30:
-        randomAsteroid = random.randint(0, screen.get_width() - 16), -20, True
-        print("1")
+        direction = random.randint(0,1)
+        if direction == 0:
+            randomAsteroid = -20, random.randint(0, screen.get_height() - 16), True, False # last bool = travels left
+        else:
+            randomAsteroid = screen.get_width() + 20, random.randint(0, screen.get_width() - 16), True, True # last bool = travels left
+        asteroid_list.append(randomAsteroid)
 
     # Asteroid update
     for i in range(len(asteroid_list)):
-        asteroid_list[i] = (asteroid_list[i][0], asteroid_list[i][1] + asteroid_speed, True)
+        if asteroid_list[i][3]:
+            asteroid_list[i] = (asteroid_list[i][0] - asteroid_speed, asteroid_list[i][1], True, True)
+        else:
+            asteroid_list[i] = (asteroid_list[i][0] + asteroid_speed, asteroid_list[i][1], True, False)
 
+    # Asteroid player collision 
+    for asteroid in asteroid_list:
+        if boxcollisionCheck(player_x, player_y, player_bb, asteroid[0], asteroid[1], asteroid_bb):
+            running = False
+    
     # Asteroid missile collision
-    for i in range(len(asteroid_list)):
+    for i in range(len(enemy_list)):
         i -= 1
-        for j in range(len(player_missile_list)):
+        for j in range(len(asteroid_list)):
             j -= 1
-            if boxcollisionCheck(player_missile_list[j][0], player_missile_list[j][1], (1, 3), asteroid_list[i][0], asteroid_list[i][1], asteroid_bb):
-                asteroid_list[i] = (-100, -100, False)
+            if boxcollisionCheck(asteroid_list[j][0], asteroid_list[j][1], (1,3), enemy_list[i][0], enemy_list[i][1], enemy_bb):
                 player_missile_list[j] = (-10, -10, False)
-                score += 20
-                break
-            if asteroid_list[i][1] > screen.get_height():
-                asteroid_list[i] = (-100, -100, False)
                 break
 
-    # Asteroid player collision    
-    if not between_levels:
-        for i in range(len(asteroid_list)):
-            i -= 1
-            if boxcollisionCheck(player_x, player_y, player_bb, asteroid_list[i][0], asteroid_list[i][1], asteroid_bb):
-                running = False
+    # Asteriod bounde collision
+    for i in range(len(asteroid_list)):
+        if asteroid_list[i][3]:
+            if asteroid_list[i][0] < -20 :
+                asteroid_list[i] = (-200, -200, False, False)
+        else:
+            if asteroid_list[i][0] > screen.get_width() + 20 :
+                asteroid_list[i] = (-200, -200, False, False)
 
     # Asteroid cleanup
     try:
-        asteroid_list.remove((-100, -100, False))
+        asteroid_list.remove((-200, -200, False, False))
     except:
         pass
+    print(len(asteroid_list))
 
 
 
@@ -328,24 +345,24 @@ while True:
     # Clear screen
     screen.fill((10, 10, 15))
 
-    # Draw missiles
-    for i in range(len(player_missile_list)):
-        pygame.draw.rect(screen, (255, 0, 0), (player_missile_list[i][0], player_missile_list[i][1], 1, 3))
-
     # Draw player
-    screen.blit(player, (player_x, player_y))
+    screen.blit(player_texture, (player_x, player_y))
+
+    # Draw missiles
+    for player_missile in player_missile_list:
+        pygame.draw.rect(screen, (255, 0, 0), (player_missile[0], player_missile[1], 1, 3))
 
     # Draw enemies
-    for i in range(len(enemy_list)):
-        screen.blit(enemy, (enemy_list[i][0], enemy_list[i][1]))
-    
-    # Draw Texts
-    scoreText = font.render(str(score), False, (255, 255, 255))
-    screen.blit(scoreText, ((screen.get_width() - scoreText.get_width()) / 2, 10)) # Score
+    for enemy in enemy_list:
+        screen.blit(enemy_texture, (enemy[0], enemy[1]))
 
     # Draw asteroids
     for asteroid in asteroid_list:
         screen.blit(asteroid_texture, (asteroid[0], asteroid[1]))
+    
+    # Draw Texts
+    scoreText = font.render(str(score), False, (255, 255, 255))
+    screen.blit(scoreText, ((screen.get_width() - scoreText.get_width()) / 2, 10)) # Score
 
     # Update screen
     pygame.display.flip()
