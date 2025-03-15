@@ -18,48 +18,6 @@ enemy_destroyed_texture = pygame.image.load("textures/enemy_dying.png")
 asteroid_texture = pygame.image.load("textures/asteroid.png")
 
 
-#### Functions
-
-# Return position in bounds
-def boundsCheck(positionX, positionY, boundingBox, screen): # BoundingBox = (width, height), x,y = position from top left
-    width = boundingBox[0]
-    height = boundingBox[1]
-    if 0 > positionX:
-        positionX = 0
-    elif screen.get_width() < positionX + width:
-        positionX = screen.get_width() - width
-    if 0 > positionY:
-        positionY = 0 
-    elif screen.get_height() < positionY + height:
-        positionY = screen.get_height() - height
-    positionXY = (positionX, positionY)
-    return positionXY
-
-
-# Collision check for two Boxes, returns True if no collision
-def boxcollisionCheck(x1,y1,boundingBox1,x2,y2,boundingBox2): # BoundingBox = (width, height), x,y = position from top left
-    width1 = boundingBox1[0]
-    height1 = boundingBox1[1]
-    width2 = boundingBox2[0]
-    height2 = boundingBox2[1]
-    noCollision = True
-    if (x2 > x1  + width1) or (x2 + width2 < x1):
-        noCollision = False
-    if (y2 + height2 < y1) or (y2 > y1 + height1):
-        noCollision = False
-    return noCollision
-
-
-
-### Initialize pygame
-pygame.init()
-
-font = pygame.font.SysFont("Agencyr", 32) # get font from system
-screen = pygame.display.set_mode((400, 300), pygame.SCALED) # create display
-pygame.display.set_caption("Space Invaders") # set name
-pygame.display.set_icon(player_texture) # set icon
-clock = pygame.time.Clock()
-
 ### Variables
 
 # Game
@@ -68,9 +26,10 @@ score = 0
 leveltick = 0 # Frames since last level change
 nextLevel_cooldown = 30 # in seconds (at 30 frames per second)
 
+
 # Player
-player_x = screen.get_width() / 2
-player_y = screen.get_height() - 100
+player_x = 0
+player_y = 0
 player_speed = 3
 player_missile_speed = 15
 player_missile_cooldown = 3 # in frames
@@ -110,6 +69,76 @@ player_bb = (14,16)
 enemy_bb = (16,16)
 asteroid_bb = (16,16)
 
+
+#### Functions
+
+# Return position in bounds
+def boundsCheck(positionX, positionY, boundingBox, screen): # BoundingBox = (width, height), x,y = position from top left
+    width = boundingBox[0]
+    height = boundingBox[1]
+    if 0 > positionX:
+        positionX = 0
+    elif screen.get_width() < positionX + width:
+        positionX = screen.get_width() - width
+    if 0 > positionY:
+        positionY = 0 
+    elif screen.get_height() < positionY + height:
+        positionY = screen.get_height() - height
+    positionXY = (positionX, positionY)
+    return positionXY
+
+
+# Collision check for two Boxes, returns True if no collision
+def boxcollisionCheck(x1,y1,boundingBox1,x2,y2,boundingBox2): # BoundingBox = (width, height), x,y = position from top left
+    width1 = boundingBox1[0]
+    height1 = boundingBox1[1]
+    width2 = boundingBox2[0]
+    height2 = boundingBox2[1]
+    noCollision = True
+    if (x2 > x1  + width1) or (x2 + width2 < x1):
+        noCollision = False
+    if (y2 + height2 < y1) or (y2 > y1 + height1):
+        noCollision = False
+    return noCollision
+
+ # Function to display game over screen
+def display_game_over(screen, font, score):
+    screen.fill((0, 0, 0))
+    game_over_text = font.render("Game Over", False, (255, 0, 0))
+    final_score_text = font.render(f"Score: {score}", False, (255, 255, 255))
+    restart_text = font.render("Press R to Restart or ESC to Quit", False, (255, 255, 255))
+
+    screen.blit(game_over_text, ((screen.get_width() - game_over_text.get_width()) / 2, screen.get_height() / 2 - 40))
+    screen.blit(final_score_text, ((screen.get_width() - final_score_text.get_width()) / 2, screen.get_height() / 2))
+    screen.blit(restart_text, ((screen.get_width() - restart_text.get_width()) / 2, screen.get_height() / 2 + 40))
+    pygame.display.flip()
+
+# Function to handle restart or quit
+def handle_restart_or_quit():
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    return True
+                elif event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    exit()
+
+
+
+### Initialize pygame
+pygame.init()
+
+font = pygame.font.SysFont("Agencyr", 32) # get font from system
+screen = pygame.display.set_mode((400, 300), pygame.SCALED) # create display
+pygame.display.set_caption("Space Invaders") # set name
+pygame.display.set_icon(player_texture) # set icon
+clock = pygame.time.Clock()
+player_x = screen.get_width() / 2
+player_y = screen.get_height() - 100
 
 ### Main Loop
 
@@ -272,7 +301,7 @@ while True:
         i -= 1
         if boxcollisionCheck(player_x, player_y, player_bb, enemy_list[i][0], enemy_list[i][1], enemy_bb):
             running = False
-
+            
     # Enemy asteroid collision
     for i in range(len(enemy_list)):
         i -= 1
@@ -312,7 +341,6 @@ while True:
     for asteroid in asteroid_list:
         if boxcollisionCheck(player_x, player_y, player_bb, asteroid[0], asteroid[1], asteroid_bb):
             running = False
-    
     # Asteroid missile collision
     for i in range(len(player_missile_list)):
         i -= 1
@@ -368,46 +396,23 @@ while True:
     pygame.display.flip()
     clock.tick(30)
 
-
-    # Restart button
-    if not running:
-        screen.fill((0, 0, 0))
-        gameOverText = font.render("Game Over", False, (255, 0, 0))
-        finalScoreText = font.render(f"Score: {score}", False, (255, 255, 255))
-        restartText = font.render("Press R to Restart or ESC to Quit", False, (255, 255, 255))
-        screen.blit(gameOverText, ((screen.get_width() - gameOverText.get_width()) / 2, screen.get_height() / 2 - 40))
-        screen.blit(finalScoreText, ((screen.get_width() - finalScoreText.get_width()) / 2, screen.get_height() / 2))
-        screen.blit(restartText, ((screen.get_width() - restartText.get_width()) / 2, screen.get_height() / 2 + 40))
-        pygame.display.flip()
-        
-        # Wait for restart or quit
-        waiting_for_restart = True
-        while waiting_for_restart:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    waiting_for_restart = False
-                    pygame.quit()
-                    exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_r:
-                        waiting_for_restart = False
-                        running = True
-                        score = 0
-                        leveltick = 0
-                        player_x = screen.get_width() / 2
-                        player_y = screen.get_height() - 100
-                        player_missile_list = []
-                        missile_cooldown = 0
-                        dash_cooldown = 0
-                        dashing = False
-                        dash_time = 0
-                        dash_x = 0
-                        dash_y = 0
-                        enemy_list = []
-                        enemy_speed = 1
-                        enemy_max = enemy_maxInit
-                    elif event.key == pygame.K_ESCAPE:
-                        waiting_for_restart = False
-                        pygame.quit()
-                        exit()
+# Main restart logic
+if not running:
+    display_game_over(screen, font, score)
+    if handle_restart_or_quit():
+        running = True
+        score = 0
+        leveltick = 0
+        player_x = screen.get_width() / 2
+        player_y = screen.get_height() - 100
+        player_missile_list = []
+        missile_cooldown = 0
+        dash_cooldown = 0
+        dashing = False
+        dash_time = 0
+        dash_x = 0
+        dash_y = 0
+        enemy_list = []
+        enemy_speed = 1
+        enemy_max = enemy_maxInit
 
