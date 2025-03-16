@@ -23,6 +23,7 @@ asteroid_texture = pygame.image.load("textures/asteroid.png")
 
 # Game
 running = True
+quit = False
 score = 0
 currentLevel = 1
 leveltick = 0 # Frames since last level change
@@ -122,7 +123,7 @@ player_y = screen.get_height() - 100
 
 ### Main Loop
 
-while True:
+while not quit:
 
 ### Ticks
 
@@ -154,7 +155,7 @@ while True:
 ### Event handling Quit
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            pygame.quit()
+            quit = True
 
 
 ### Get pressed keys
@@ -188,7 +189,7 @@ while True:
     
     # Quit
     if keys[pygame.K_ESCAPE]:
-        quit()
+        quit = True
 
 
 
@@ -355,35 +356,37 @@ while True:
 
 ### Rendering
 
-    # Clear screen
-    screen.fill((10, 10, 15))
+    # Gameplay Rendering
+    if running:
+        # Clear screen
+        screen.fill((10, 10, 15))
 
-    # Draw player
-    screen.blit(player_texture, (player_x, player_y))
+        # Draw player
+        screen.blit(player_texture, (player_x, player_y))
 
-    # Draw missiles
-    for player_missile in player_missile_list:
-        pygame.draw.rect(screen, (255, 0, 0), (player_missile[0], player_missile[1], 1, 3))
+        # Draw missiles
+        for player_missile in player_missile_list:
+            pygame.draw.rect(screen, (255, 0, 0), (player_missile[0], player_missile[1], 1, 3))
 
-    # Draw enemies
-    for enemy in enemy_list:
-        screen.blit(enemy_texture, (enemy[0], enemy[1]))
+        # Draw enemies
+        for enemy in enemy_list:
+            screen.blit(enemy_texture, (enemy[0], enemy[1]))
 
-    # Draw asteroids
-    for asteroid in asteroid_list:
-        screen.blit(asteroid_texture, (asteroid[0], asteroid[1]))
-    
-    # Draw Texts
-    scoreText = font.render(str(score), False, (255, 255, 255))
-    screen.blit(scoreText, ((screen.get_width() - scoreText.get_width()) / 2, 10)) # Score
+        # Draw asteroids
+        for asteroid in asteroid_list:
+            screen.blit(asteroid_texture, (asteroid[0], asteroid[1]))
+        
+        # Draw Texts
+        scoreText = font.render(str(score), False, (255, 255, 255))
+        screen.blit(scoreText, ((screen.get_width() - scoreText.get_width()) / 2, 10)) # Score
 
-    # Update screen
-    pygame.display.flip()
-    clock.tick(30)
+        # Update screen
+        pygame.display.flip()
+        clock.tick(30)
 
 
     # Restart button
-    if not running:
+    else:
         screen.fill((0, 0, 0))
         gameOverText = font.render("Game Over", False, (255, 0, 0))
         finalScoreText = font.render(f"Score: {score}", False, (255, 255, 255))
@@ -399,8 +402,7 @@ while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     waiting_for_restart = False
-                    pygame.quit()
-                    exit()
+                    quit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
                         waiting_for_restart = False
@@ -421,6 +423,8 @@ while True:
                         enemy_max = enemy_maxInit
                     elif event.key == pygame.K_ESCAPE:
                         waiting_for_restart = False
-                        pygame.quit()
-                        exit()
+                        running = False
+                        quit = True
+
+pygame.quit()
 
