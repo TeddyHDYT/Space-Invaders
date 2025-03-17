@@ -436,6 +436,11 @@ while not quit:
                         enemy_list = []
                         enemy_speed = 1
                         enemy_max = enemy_maxInit
+                        asteroid_list = []
+                        asteroid_speed = 1
+                        asteroid_spawnchance = 0.2
+                        asteroid_max = 5
+                        asteroid_maxIncease = 3
                     elif event.key == pygame.K_ESCAPE:
                         waiting_for_restart = False
                         running = False
