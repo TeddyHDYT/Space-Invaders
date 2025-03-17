@@ -104,6 +104,7 @@ def boxcollisionCheck(x1,y1,boundingBox1,x2,y2,boundingBox2): # BoundingBox = (w
         noCollision = False
     return noCollision
 
+# Handle game over screen rednering
 def display_game_over(screen, font, score):
     screen.fill((0, 0, 0))
     game_over_text = font.render("Game Over", False, (255, 0, 0))
@@ -115,6 +116,7 @@ def display_game_over(screen, font, score):
     screen.blit(restart_text, ((screen.get_width() - restart_text.get_width()) / 2, screen.get_height() / 2 + 40))
     pygame.display.flip()
 
+# Handle restart or quit logic
 def handle_restart_or_quit():
     while True:
         for event in pygame.event.get():
