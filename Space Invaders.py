@@ -23,7 +23,6 @@ asteroid_texture = pygame.image.load("textures/asteroid.png")
 
 # Game
 running = True
-quit = False
 score = 0
 currentLevel = 1
 leveltick = 0 # Frames since last level change
@@ -105,6 +104,30 @@ def boxcollisionCheck(x1,y1,boundingBox1,x2,y2,boundingBox2): # BoundingBox = (w
         noCollision = False
     return noCollision
 
+def display_game_over(screen, font, score):
+    screen.fill((0, 0, 0))
+    game_over_text = font.render("Game Over", False, (255, 0, 0))
+    final_score_text = font.render(f"Score: {score}", False, (255, 255, 255))
+    restart_text = font.render("Press R to Restart or ESC to Quit", False, (255, 255, 255))
+
+    screen.blit(game_over_text, ((screen.get_width() - game_over_text.get_width()) / 2, screen.get_height() / 2 - 40))
+    screen.blit(final_score_text, ((screen.get_width() - final_score_text.get_width()) / 2, screen.get_height() / 2))
+    screen.blit(restart_text, ((screen.get_width() - restart_text.get_width()) / 2, screen.get_height() / 2 + 40))
+    pygame.display.flip()
+
+def handle_restart_or_quit():
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    return True
+                elif event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    exit()
+
 
 
 ### Initialize pygame
@@ -123,7 +146,7 @@ player_y = screen.get_height() - 100
 
 ### Main Loop
 
-while not quit:
+while True:
 
 ### Ticks
 
@@ -155,7 +178,7 @@ while not quit:
 ### Event handling Quit
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            quit = True
+            quit()
 
 
 ### Get pressed keys
@@ -189,7 +212,7 @@ while not quit:
     
     # Quit
     if keys[pygame.K_ESCAPE]:
-        quit = True
+        quit()
 
 
 
@@ -363,12 +386,7 @@ while not quit:
 
         # Draw player
         screen.blit(player_texture, (player_x, player_y))
-        # Draw player
-        screen.blit(player_texture, (player_x, player_y))
 
-        # Draw missiles
-        for player_missile in player_missile_list:
-            pygame.draw.rect(screen, (255, 0, 0), (player_missile[0], player_missile[1], 1, 3))
         # Draw missiles
         for player_missile in player_missile_list:
             pygame.draw.rect(screen, (255, 0, 0), (player_missile[0], player_missile[1], 1, 3))
@@ -376,17 +394,7 @@ while not quit:
         # Draw enemies
         for enemy in enemy_list:
             screen.blit(enemy_texture, (enemy[0], enemy[1]))
-        # Draw enemies
-        for enemy in enemy_list:
-            screen.blit(enemy_texture, (enemy[0], enemy[1]))
 
-        # Draw asteroids
-        for asteroid in asteroid_list:
-            screen.blit(asteroid_texture, (asteroid[0], asteroid[1]))
-        
-        # Draw Texts
-        scoreText = font.render(str(score), False, (255, 255, 255))
-        screen.blit(scoreText, ((screen.get_width() - scoreText.get_width()) / 2, 10)) # Score
         # Draw asteroids
         for asteroid in asteroid_list:
             screen.blit(asteroid_texture, (asteroid[0], asteroid[1]))
@@ -402,48 +410,23 @@ while not quit:
 
     # Restart button
     else:
-        screen.fill((0, 0, 0))
-        gameOverText = font.render("Game Over", False, (255, 0, 0))
-        finalScoreText = font.render(f"Score: {score}", False, (255, 255, 255))
-        restartText = font.render("Press R to Restart or ESC to Quit", False, (255, 255, 255))
-        screen.blit(gameOverText, ((screen.get_width() - gameOverText.get_width()) / 2, screen.get_height() / 2 - 40))
-        screen.blit(finalScoreText, ((screen.get_width() - finalScoreText.get_width()) / 2, screen.get_height() / 2))
-        screen.blit(restartText, ((screen.get_width() - restartText.get_width()) / 2, screen.get_height() / 2 + 40))
-        pygame.display.flip()
+        display_game_over(screen, font, score)
         
         # Wait for restart or quit
-        waiting_for_restart = True
-        while waiting_for_restart:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    waiting_for_restart = False
-                    quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_r:
-                        waiting_for_restart = False
-                        running = True
-                        score = 0
-                        leveltick = 0
-                        player_x = screen.get_width() / 2
-                        player_y = screen.get_height() - 100
-                        player_missile_list = []
-                        missile_cooldown = 0
-                        dash_cooldown = 0
-                        dashing = False
-                        dash_time = 0
-                        dash_x = 0
-                        dash_y = 0
-                        enemy_list = []
-                        enemy_speed = 1
-                        enemy_max = enemy_maxInit
-                        asteroid_list = []
-                        asteroid_speed = 1
-                        asteroid_spawnchance = 0.2
-                        asteroid_max = 5
-                        asteroid_maxIncease = 3
-                    elif event.key == pygame.K_ESCAPE:
-                        waiting_for_restart = False
-                        running = False
-                        quit = True
-
-pygame.quit()
+        if handle_restart_or_quit():
+                running = True
+                score = 0
+                leveltick = 0
+                player_x = screen.get_width() / 2
+                player_y = screen.get_height() - 100
+                player_missile_list = []
+                missile_cooldown = 0
+                dash_cooldown = 0
+                dashing = False
+                dash_time = 0
+                dash_x = 0
+                dash_y = 0
+                enemy_list = []
+                enemy_speed = 1
+                enemy_max = enemy_maxInit
+                asteroid_list = []
