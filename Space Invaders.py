@@ -363,7 +363,12 @@ while not quit:
 
         # Draw player
         screen.blit(player_texture, (player_x, player_y))
+        # Draw player
+        screen.blit(player_texture, (player_x, player_y))
 
+        # Draw missiles
+        for player_missile in player_missile_list:
+            pygame.draw.rect(screen, (255, 0, 0), (player_missile[0], player_missile[1], 1, 3))
         # Draw missiles
         for player_missile in player_missile_list:
             pygame.draw.rect(screen, (255, 0, 0), (player_missile[0], player_missile[1], 1, 3))
@@ -371,7 +376,17 @@ while not quit:
         # Draw enemies
         for enemy in enemy_list:
             screen.blit(enemy_texture, (enemy[0], enemy[1]))
+        # Draw enemies
+        for enemy in enemy_list:
+            screen.blit(enemy_texture, (enemy[0], enemy[1]))
 
+        # Draw asteroids
+        for asteroid in asteroid_list:
+            screen.blit(asteroid_texture, (asteroid[0], asteroid[1]))
+        
+        # Draw Texts
+        scoreText = font.render(str(score), False, (255, 255, 255))
+        screen.blit(scoreText, ((screen.get_width() - scoreText.get_width()) / 2, 10)) # Score
         # Draw asteroids
         for asteroid in asteroid_list:
             screen.blit(asteroid_texture, (asteroid[0], asteroid[1]))
